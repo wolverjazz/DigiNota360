@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DigiNota 360</title>
+
+    <link rel="icon" type="image/jpeg" href="./DIGINOTA360.jpg">
+    
+    <link rel="apple-touch-icon" href="./DIGINOTA360.jpg">
+
+    <link rel="manifest" href='data:application/manifest+json,{"name":"DigiNota 360","short_name":"DigiNota","start_url":"/nota-de-venta-digital/","display":"standalone","background_color":"#ffffff","theme_color":"#0d6efd","icons":[{"src":"./DIGINOTA360.jpg","sizes":"512x512","type":"image/jpeg"}]}'>    <style>
+        :root { --primary: #0d6efd; --success: #25D366; --dark: #212529; --danger: #dc3545; --light: #f8f9fa; --warning: #ffc107; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; color: #333; user-select: none; }
+        .container { max-width: 950px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        /* AJUSTE DE HEADER PARA EVITAR SOBREPOSICIÓN */
+        header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            border-bottom: 1px solid #eee; 
+            padding-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #logoImg { max-height: 100px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
+        .empresa-data input { display: block; width: 100%; border: none; text-align: center; font-size: 0.95rem; color: #444; padding: 2px 0; outline: none; background: transparent; }
+        .empresa-nombre { font-size: 2rem !important; font-weight: bold; color: #222; text-transform: uppercase; width: 100%; }
+        
+        /* DISEÑO DE FOLIO CENTRADO Y FLEXIBLE */
+        .folio-badge { 
+            position: relative; 
+            margin: 0 auto 15px auto; 
+            border: 2px solid var(--danger); 
+            color: var(--danger); 
+            padding: 5px 15px; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            text-align: center;
+            width: fit-content;
+            display: block;
+        }
+
+        .folio-main { font-size: 1.2rem; display: block; }
+        .folio-limit { font-size: 0.75rem; display: block; border-top: 1px solid rgba(220, 53, 69, 0.3); margin-top: 4px; padding-top: 2px; }
+        .client-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; background: var(--light); padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .client-grid input { width: 100%; border: 1px solid #ddd; padding: 8px; border-radius: 4px; box-sizing: border-box; }
+        .table-header { display: grid; grid-template-columns: 0.5fr 3fr 1fr 1fr 0.3fr; gap: 10px; padding: 10px; background: var(--dark); color: white; border-radius: 4px; font-size: 0.9rem; }
+        .row-item { display: grid; grid-template-columns: 0.5fr 3fr 1fr 1fr 0.3fr; gap: 10px; margin-top: 8px; align-items: center; }
+        .row-item input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        .totals-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 25px; margin-top: 25px; padding: 15px; border-top: 2px solid #eee; }
+        .grand-total-box { font-size: 1.8rem; font-weight: 800; color: #000; padding-left: 20px; border-left: 2px solid #eee; }
+        .button-group { display: flex; gap: 10px; margin: 25px 0; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-ws { background: var(--success); } .btn-pr { background: #333; } .btn-ct { background: #6f42c1; } .btn-re { background: var(--warning); color: #333; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; color: white; text-align: center; padding-top: 80px; }
+        .modal { background: white; color: black; padding: 30px; border-radius: 10px; display: inline-block; max-width: 400px; width: 90%; text-align: left; }
+        .history-section { margin-top: 40px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #fff; overflow-x: auto; }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 700px; }
+        .history-table th { background: var(--light); padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+        .history-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        @media print { .no-print { display: none !important; } .container { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; } }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="rechargeOverlay" class="overlay">
+    <div class="modal">
+        <h2 style="margin-top:0;">Recargar Folios</h2>
+        <p style="font-size:0.8rem; color:gray; margin-bottom:5px;">ID Sistema: <span id="idDisplay" style="font-weight:bold; color:black;"></span></p>
+        <p style="font-size:0.8rem; color:gray; margin-bottom:15px;">Recarga Actual: #<span id="recargaNumDisplay" style="font-weight:bold; color:black;"></span></p>
+        <select id="paqueteSeleccionado" style="width:100%; padding:10px; margin:10px 0;">
+            <option value="100">100 Folios</option><option value="200">200 Folios</option><option value="300">300 Folios</option><option value="400">400 Folios</option><option value="500" selected>500 Folios</option><option value="1000">1000 Folios</option>
+        </select>
+        <input type="text" id="rechargeKey" placeholder="Ingrese clave de activación" style="width:100%; padding:10px; margin:10px 0; border: 1px solid #ddd;">
+        <button class="btn btn-ws" style="width:100%; margin-bottom:15px;" onclick="executeRecharge()">ACTIVAR FOLIOS</button>
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <button class="btn" style="background:var(--danger); width:100%;" onclick="askForCreatorKey()">RESETEAR SISTEMA</button>
+        <button onclick="closeModals()" style="width:100%; border:none; color:gray; margin-top:15px; cursor:pointer; background:none;">Cerrar</button>
+    </div>
+</div>
+
+<div id="resetOverlay" class="overlay">
+    <div class="modal">
+        <h2 style="color:var(--danger)">Confirmar Reset</h2>
+        <input type="password" id="resetKey" placeholder="Clave de administrador" style="width:100%; padding:10px; margin:10px 0;">
+        <button class="btn" style="background:var(--danger); width:100%;" onclick="executeFullReset()">BORRAR TODO</button>
+        <button onclick="closeResetModal()" style="width:100%; border:none; color:gray; margin-top:10px; cursor:pointer; background:none;">Cancelar</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="folio-badge">
+        <span class="folio-main">FOLIO: <span id="folioNum">000</span></span>
+        <span class="folio-limit">Límite: <span id="folioLimit">000</span></span>
+    </div>
+    <header>
+        <div onclick="document.getElementById('logoInput').click()" style="cursor:pointer;">
+            <img id="logoImg" src="" style="display:none;"><div id="logoLabel" class="no-print">[ Logo ]</div>
+            <input type="file" id="logoInput" style="display:none;" onchange="saveLogo(this)">
+        </div>
+        <div class="empresa-data">
+            <input type="text" id="empNombre" class="empresa-nombre" placeholder="Nombre de la Empresa" oninput="saveData()">
+            <input type="text" id="empDueno" placeholder="NOMBRE DEL TITULAR" oninput="saveData()"><input type="text" id="empRFC" placeholder="R.F.C." oninput="saveData()">
+            <input type="text" id="empDir" placeholder="DIRECCIÓN" oninput="saveData()"><input type="text" id="empCP" placeholder="C.P. / CIUDAD" oninput="saveData()">
+            <input type="text" id="empCorreo" placeholder="CORREO / TEL" oninput="saveData()">
+        </div>
+    </header>
+
+    <div class="client-grid">
+        <input type="text" id="cliente" placeholder="Cliente"><input type="tel" id="telCliente" placeholder="WhatsApp (10 dígitos)"><input type="date" id="fecha">
+    </div>
+    <div class="table-header"><div>Cant</div><div>Descripción</div><div>P. Unitario</div><div>Total</div><div></div></div>
+    <div id="items-container"></div>
+    <button class="btn no-print" style="background:var(--primary); width:auto; margin-top:10px;" onclick="addRow()">+ Producto</button>
+    <div class="totals-bar">
+        <div style="display:flex; gap:10px; align-items:center;">Anticipo: <input type="number" id="anticipo" value="0" oninput="calculateAll()" style="width:80px; padding:5px;"></div>
+        <div style="color:var(--danger)">Resta: <span id="restante">$0.00</span></div>
+        <div class="grand-total-box">TOTAL: $<span id="grandTotal">0.00</span></div>
+    </div>
+    <div class="button-group no-print">
+        <button class="btn btn-ws" onclick="sendWhatsApp()">WhatsApp</button><button class="btn btn-pr" onclick="processPrint()">Imprimir</button>
+        <button class="btn btn-ct" onclick="generateReport()">Corte Diario</button><button class="btn btn-re" onclick="openRechargeModal()">Folios</button>
+    </div>
+    <div class="history-section no-print">
+        <h3>📋 Ventas Recientes</h3>
+        <table class="history-table"><thead><tr><th>Folio</th><th>Cliente</th><th>Descripción</th><th>Total</th></tr></thead><tbody id="historyBody"></tbody></table>
+    </div>
+</div>
+
+<script>
+    document.onkeydown = (e) => { if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) return false; };
+
+    let folio = parseInt(localStorage.getItem('folio')) || 1;
+    let limite = parseInt(localStorage.getItem('limite')) || 20; // REGALO: 20 FOLIOS
+    let recargasCount = parseInt(localStorage.getItem('recargasCount')) || 1;
+    let historial = JSON.parse(localStorage.getItem('historial')) || [];
+
+    window.onload = () => { document.getElementById('fecha').valueAsDate = new Date(); loadSavedData(); renderHistory(); if(document.getElementById('items-container').children.length === 0) addRow(); updateDisplay(); };
+    
+    function updateDisplay() { 
+        document.getElementById('folioNum').innerText = folio.toString().padStart(3, '0'); 
+        document.getElementById('folioLimit').innerText = limite; 
+    }
+    
+    function addRow() { 
+        const div = document.createElement('div'); div.className = 'row-item'; 
+        div.innerHTML = `<div><input type="number" class="qty" value="1" oninput="calcByQty(this)"></div><div><input type="text" class="desc" placeholder="..."></div><div><input type="number" class="price" oninput="calcByPrice(this)"></div><div><input type="number" class="total-row" oninput="calcByTotal(this)"></div><div class="no-print"><button onclick="this.parentElement.parentElement.remove(); calculateAll();" style="color:red; background:none; border:none; cursor:pointer;">✕</button></div>`; 
+        document.getElementById('items-container').appendChild(div); 
+    }
+
+    function calcByPrice(el) { const row = el.closest('.row-item'); const q = parseFloat(row.querySelector('.qty').value) || 0; const p = parseFloat(el.value) || 0; row.querySelector('.total-row').value = (q * p).toFixed(2); calculateAll(); }
+    function calcByQty(el) { const row = el.closest('.row-item'); const q = parseFloat(el.value) || 0; const p = parseFloat(row.querySelector('.price').value) || 0; row.querySelector('.total-row').value = (q * p).toFixed(2); calculateAll(); }
+    function calcByTotal(el) { const row = el.closest('.row-item'); const q = parseFloat(row.querySelector('.qty').value) || 1; const t = parseFloat(el.value) || 0; row.querySelector('.price').value = (t / q).toFixed(2); calculateAll(); }
+
+    function calculateAll() { 
+        let total = 0; document.querySelectorAll('.total-row').forEach(i => total += parseFloat(i.value) || 0); 
+        const ant = parseFloat(document.getElementById('anticipo').value) || 0; 
+        document.getElementById('grandTotal').innerText = total.toFixed(2); 
+        document.getElementById('restante').innerText = (total - ant).toFixed(2); 
+    }
+
+    function askForCreatorKey() {
+        let pass = prompt("Acceso Restringido. Ingrese contraseña:");
+        if (pass === "creadorjazz") { document.getElementById('rechargeOverlay').style.display = "none"; document.getElementById('resetOverlay').style.display = "block"; }
+        else if (pass !== null) alert("❌ Denegado");
+    }
+
+    function executeFullReset() { if(document.getElementById('resetKey').value === "reset123") { localStorage.clear(); location.reload(); } else alert("❌ Incorrecta"); }
+    
+    function obtenerDescripcionTexto() { let det = []; document.querySelectorAll('.row-item').forEach(r => { const c = r.querySelector('.qty').value; const d = r.querySelector('.desc').value; if(d.trim()) det.push(`${c}x ${d}`); }); return det.join(", "); }
+    
+    function finalizeSale(desc) { 
+        if(folio > limite) return alert("⚠️ Límite de folios alcanzado. Por favor, adquiera una recarga para continuar.");
+        historial.push({ folio: folio.toString().padStart(3, '0'), cliente: document.getElementById('cliente').value || "Mostrador", detalle: desc, total: document.getElementById('grandTotal').innerText, fecha: document.getElementById('fecha').value }); 
+        localStorage.setItem('historial', JSON.stringify(historial)); 
+        localStorage.setItem('folio', ++folio); 
+        location.reload(); 
+    }
+    
+    function processPrint() { const d = obtenerDescripcionTexto(); if(!d) return alert("La nota está vacía"); window.print(); setTimeout(() => { if(confirm("¿Desea guardar y generar folio?")) finalizeSale(d); }, 500); }
+
+    function sendWhatsApp() {
+        const tel = document.getElementById('telCliente').value;
+        const d = obtenerDescripcionTexto();
+        if(!tel || !d) return alert("Se requiere número de WhatsApp y productos");
+        const emp = document.getElementById('empNombre').value;
+        const nFolio = folio.toString().padStart(3,'0');
+        let msg = `*${emp}*\n*NOTA DE VENTA # ${nFolio}*\n----------------------------\n*PRODUCTOS:*\n${d.replace(/, /g, '\n')}\n----------------------------\n*TOTAL: $${document.getElementById('grandTotal').innerText}*\nAnticipo: $${document.getElementById('anticipo').value}\n*RESTA: $${document.getElementById('restante').innerText}*\n\n¡Gracias por su preferencia!`;
+        window.open(`https://api.whatsapp.com/send?phone=52${tel}&text=${encodeURIComponent(msg)}`);
+        finalizeSale(d);
+    }
+
+    function generateReport() { 
+        const hoy = document.getElementById('fecha').value; 
+        const ventas = historial.filter(h => h.fecha === hoy); 
+        if(ventas.length === 0) return alert("No hay ventas hoy: " + hoy);
+        let suma = 0;
+        let html = `<html><head><title>Corte ${hoy}</title><style>body{font-family:sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;} th,td{padding:10px;border:1px solid #ddd;text-align:left;} th{background:#eee;} @media print{.no-print{display:none;}}</style></head><body>`;
+        html += `<h2>REPORTE DE VENTAS: ${hoy}</h2><table><tr><th>Folio</th><th>Cliente</th><th>Descripción</th><th>Total</th></tr>`;
+        ventas.forEach(v => { html += `<tr><td>${v.folio}</td><td>${v.cliente}</td><td>${v.detalle}</td><td>$${v.total}</td></tr>`; suma += parseFloat(v.total); });
+        html += `</table><h3>TOTAL DEL DÍA: $${suma.toFixed(2)}</h3><button class="no-print" onclick="window.print()">Imprimir Reporte</button></body></html>`;
+        const win = window.open(); win.document.write(html); win.document.close();
+    }
+
+    function renderHistory() { const body = document.getElementById('historyBody'); body.innerHTML = ""; historial.slice().reverse().slice(0, 10).forEach(h => { body.innerHTML += `<tr><td>${h.folio}</td><td>${h.cliente}</td><td style="color:#666">${h.detalle}</td><td style="font-weight:bold">$${h.total}</td></tr>`; }); }
+    
+    function openRechargeModal() { 
+        let id = document.getElementById('empRFC').value || document.getElementById('empNombre').value || document.getElementById('empDueno').value || "SINDATOS";
+        id = id.toUpperCase().replace(/\s/g, '');
+        document.getElementById('idDisplay').innerText = id;
+        document.getElementById('recargaNumDisplay').innerText = recargasCount;
+        document.getElementById('rechargeOverlay').style.display = "block"; 
+    }
+
+    function closeModals() { document.getElementById('rechargeOverlay').style.display = "none"; }
+    function closeResetModal() { document.getElementById('resetOverlay').style.display = "none"; document.getElementById('rechargeOverlay').style.display = "block"; }
+
+    function executeRecharge() {
+        const id = document.getElementById('idDisplay').innerText;
+        const pack = document.getElementById('paqueteSeleccionado').value;
+        const keyIngresada = document.getElementById('rechargeKey').value.trim();
+        const maestra = "jazz360";
+        const raw = `${id}-${recargasCount}-${pack}-${maestra}`;
+        const keyCorrecta = btoa(raw).replace(/=/g, '').toUpperCase().substring(0, 10);
+        if(keyIngresada === keyCorrecta) {
+            limite += parseInt(pack);
+            recargasCount++;
+            localStorage.setItem('limite', limite);
+            localStorage.setItem('recargasCount', recargasCount);
+            alert("✅ ¡Activación Exitosa! Se añadieron " + pack + " folios.");
+            location.reload();
+        } else { alert("❌ Clave incorrecta. Verifique su ID y el paquete."); }
+    }
+
+    function saveData() { ['empNombre', 'empDueno', 'empRFC', 'empDir', 'empCP', 'empCorreo'].forEach(id => localStorage.setItem(id, document.getElementById(id).value)); }
+    function loadSavedData() { ['empNombre', 'empDueno', 'empRFC', 'empDir', 'empCP', 'empCorreo'].forEach(id => document.getElementById(id).value = localStorage.getItem(id) || ""); if(localStorage.getItem('empLogo')) { document.getElementById('logoImg').src = localStorage.getItem('empLogo'); document.getElementById('logoImg').style.display = 'block'; document.getElementById('logoLabel').style.display = 'none'; } }
+    function saveLogo(input) { if (input.files[0]) { const reader = new FileReader(); reader.onload = e => { localStorage.setItem('empLogo', e.target.result); location.reload(); }; reader.readAsDataURL(input.files[0]); } }
+</script>
+</body>
+</html>
