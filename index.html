@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DigiNota 360</title>
+
+   	<link rel="apple-touch-icon" sizes="180x180" href="./DIGINOTA360.jpg">
+	<link rel="icon" type="image/jpeg" sizes="32x32" href="./DIGINOTA360.jpg">
+	<link rel="icon" type="image/jpeg" sizes="192x192" href="./DIGINOTA360.jpg">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    	<link rel="manifest" href='data:application/manifest+json,{"name":"DigiNota 	360","short_name":"DigiNota","start_url":"./","display":"standalone","background_color":"#ffffff","theme_color":"#0d6efd","icons":[{"src":"./DIGINOTA360.jpg?v=	2","sizes":"512x512","type":"image/jpeg","purpose":"any maskable"}]}'>
+
+    <style>
+        :root { --primary: #0d6efd; --success: #25D366; --dark: #212529; --danger: #dc3545; --light: #f8f9fa; --warning: #ffc107; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; color: #333; user-select: none; }
+        .container { max-width: 950px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        header { text-align: center; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px; display: flex; flex-direction: column; align-items: center; }
+        #logoImg { max-height: 100px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
+        
+        .empresa-data { width: 100%; }
+        .empresa-data input { display: block; width: 100%; border: none; text-align: center; font-size: 0.95rem; color: #444; padding: 2px 0; outline: none; background: transparent; }
+        .empresa-nombre { 
+            font-size: clamp(1.2rem, 6vw, 2rem) !important; 
+            font-weight: bold; 
+            color: #222; 
+            text-transform: uppercase; 
+            width: 100%; 
+            white-space: normal !important; 
+            word-wrap: break-word; 
+            line-height: 1.2; 
+            display: block;
+        }
+        
+        .folio-badge { position: relative; margin: 0 auto 15px auto; border: 2px solid var(--danger); color: var(--danger); padding: 5px 15px; border-radius: 5px; font-weight: bold; text-align: center; width: fit-content; display: block; }
+        .folio-main { font-size: 1.2rem; display: block; }
+        .folio-limit { font-size: 0.75rem; display: block; border-top: 1px solid rgba(220, 53, 69, 0.3); margin-top: 4px; padding-top: 2px; }
+
+        .client-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; background: var(--light); padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .client-grid { grid-template-columns: 1fr; } }
+        .client-grid input { width: 100%; border: 1px solid #ddd; padding: 8px; border-radius: 4px; box-sizing: border-box; }
+        
+        /* DISEÑO DE FILAS (PC) */
+        .row-item { display: grid; grid-template-columns: 0.5fr 3fr 1fr 1fr 0.3fr; gap: 10px; margin-top: 8px; align-items: center; border-bottom: 1px solid #f1f1f1; padding-bottom: 5px; }
+        .row-item input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box; }
+
+        /* AJUSTE PARA CELULAR (RE-ACOMODO) CORREGIDO */
+        @media (max-width: 600px) {
+            .row-item { 
+                display: flex !important; 
+                flex-wrap: wrap !important; 
+                gap: 8px !important; 
+                padding: 10px 0 !important;
+            }
+            /* Cantidad y Descripción en la primera línea */
+            .row-item div:nth-child(1) { flex: 0 0 50px; } 
+            .row-item div:nth-child(2) { flex: 1; min-width: 150px; }
+            
+            /* P. Unit y Total abajo ocupando mitad y mitad */
+            .row-item div:nth-child(3), 
+            .row-item div:nth-child(4) { 
+                flex: 1 0 40%; 
+                margin-top: 5px;
+            }
+            /* Botón de eliminar al final */
+            .row-item div:nth-child(5) { 
+                flex: 0 0 30px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+            }
+        }
+        
+        #obs-container { margin-top: 10px; text-align: center; }
+        .obs-input { width: 100%; border: 1px dashed var(--primary); padding: 10px; border-radius: 4px; box-sizing: border-box; font-style: italic; margin-top: 5px; height: 60px; }
+
+        .totals-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 25px; margin-top: 25px; padding: 15px; border-top: 2px solid #eee; }
+        .grand-total-box { font-size: 1.8rem; font-weight: 800; color: #000; padding-left: 20px; border-left: 2px solid #eee; }
+        
+        .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 25px 0; }
+        .btn { flex: 1; min-width: 120px; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-ws { background: var(--success); } .btn-pr { background: #333; } .btn-ct { background: #6f42c1; } .btn-re { background: var(--warning); color: #333; }
+        
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; color: white; text-align: center; padding-top: 80px; }
+        .modal { background: white; color: black; padding: 30px; border-radius: 10px; display: inline-block; max-width: 400px; width: 90%; text-align: left; }
+        
+        .history-section { margin-top: 40px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #fff; }
+        .history-title { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        #historyList { display: none; margin-top: 15px; } 
+        .history-item { border-bottom: 1px solid #eee; padding: 10px 0; cursor: pointer; }
+        .history-detail { display: none; padding: 15px; background: #f9f9f9; border-radius: 5px; margin-top: 10px; font-size: 0.85rem; border-left: 3px solid var(--primary); }
+
+        @media print { 
+            .no-print, .button-group, .history-section, #logoLabel, .btn, .folio-limit { display: none !important; }
+            body { background: white !important; margin: 0 !important; padding: 0 !important; display: block !important; }
+            .container { box-shadow: none !important; border: none !important; width: 280px !important; margin: 0 auto !important; padding: 5px !important; }
+            input, textarea { border: none !important; background: transparent !important; font-family: 'Courier New', monospace !important; text-align: center !important; width: 100% !important; }
+            .obs-input { display: block !important; height: auto !important; text-align: left !important; font-size: 12px !important; margin-top: 10px !important; border-top: 1px dashed #000 !important; padding-top: 5px !important; }
+            .row-item { grid-template-columns: 30px 1fr 60px 70px !important; display: grid !important; gap: 2px !important; font-size: 12px !important; border-bottom: 1px solid #eee !important; align-items: center !important; }
+            .row-item div:last-child { display: none !important; }
+            header { margin-bottom: 10px !important; }
+            #logoImg { max-height: 80px !important; margin-bottom: 5px !important; }
+            .empresa-nombre { font-size: 1.4rem !important; white-space: normal !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="folio-badge">
+        <span class="folio-main">FOLIO: <span id="folioNum">000</span></span>
+        <span class="folio-limit">Límite: <span id="folioLimit">000</span></span>
+    </div>
+    <header>
+        <div onclick="document.getElementById('logoInput').click()" style="cursor:pointer;">
+            <img id="logoImg" src="" style="display:none;"><div id="logoLabel" class="no-print">[ Logo ]</div>
+            <input type="file" id="logoInput" style="display:none;" onchange="saveLogo(this)">
+        </div>
+        <div class="empresa-data">
+            <input type="text" id="empNombre" class="empresa-nombre" placeholder="Nombre de la Empresa" oninput="saveData()">
+            <input type="text" id="empDueno" placeholder="TITULAR" oninput="saveData()">
+            <input type="text" id="empRFC" placeholder="RFC" oninput="saveData()">
+            <input type="text" id="empDir" placeholder="DIRECCIÓN" oninput="saveData()">
+            <input type="text" id="empCP" placeholder="CP / CIUDAD" oninput="saveData()">
+            <input type="text" id="empCorreo" placeholder="CORREO / TEL" oninput="saveData()">
+        </div>
+    </header>
+
+    <div class="client-grid">
+        <input type="text" id="cliente" placeholder="Cliente">
+        <input type="tel" id="telCliente" placeholder="WhatsApp">
+        <div><small class="no-print">Fecha:</small><input type="date" id="fecha"></div>
+        <div><small class="no-print">Entrega:</small><input type="date" id="fechaEntrega"></div>
+    </div>
+
+    <div id="items-container"></div>
+    <div id="obs-container"></div>
+
+    <div style="display:flex; gap:10px;" class="no-print">
+        <button class="btn" style="background:var(--primary); width:auto; margin-top:10px;" onclick="addRow()">+ Producto</button>
+        <button class="btn" style="background:var(--dark); width:auto; margin-top:10px;" onclick="addObs()">+ Observaciones</button>
+    </div>
+
+    <div class="totals-bar">
+        <div style="display:flex; gap:10px; align-items:center;">Anticipo: <input type="number" id="anticipo" value="0" oninput="calculateAll()" style="width:80px; padding:5px;"></div>
+        <div style="color:var(--danger)">Resta: <span id="restante">$0.00</span></div>
+        <div class="grand-total-box">TOTAL: $<span id="grandTotal">0.00</span></div>
+    </div>
+
+    <div class="button-group no-print">
+        <button class="btn btn-ws" onclick="sendWhatsApp()">WhatsApp</button>
+        <button class="btn btn-pr" onclick="processPrint()">Imprimir</button>
+        <button class="btn btn-ct" onclick="generateReport()">Corte Diario</button>
+        <button class="btn btn-re" onclick="openRechargeModal()">Folios</button>
+        <button class="btn" style="background:#007bff;" onclick="cierreMensual()">Cierre de Mes</button>
+    </div>
+
+    <div class="history-section no-print">
+        <div class="history-title" onclick="toggleHistory()">
+            <h3 style="margin:0;">📋 Historial de Ventas</h3>
+            <span id="histArrow">▼</span>
+        </div>
+        <div id="historyList"></div>
+    </div>
+</div>
+
+<div id="rechargeOverlay" class="overlay">
+    <div class="modal">
+        <h2>Activar Folios</h2>
+        <p>ID: <span id="idDisplay"></span></p>
+        <select id="paqueteSeleccionado" style="width:100%; padding:10px; margin-bottom:10px;">
+            <option value="100">100 Folios</option><option value="200">200 Folios</option><option value="300">300 Folios</option>
+            <option value="400">400 Folios</option><option value="500" selected>500 Folios</option><option value="1000">1000 Folios</option>
+        </select>
+        <input type="text" id="rechargeKey" placeholder="Clave de activación" style="width:100%; padding:10px; margin-bottom:10px;">
+        <button class="btn btn-ws" style="width:100%;" onclick="executeRecharge()">ACTIVAR</button>
+        
+        <button class="btn" style="width:100%; background:var(--danger); margin-top:10px;" onclick="resetSystem()">RESET TOTAL</button>
+        
+        <button onclick="closeModals()" style="width:100%; background:none; border:none; color:gray; margin-top:10px; cursor:pointer;">Cerrar</button>
+    </div>
+</div>
+
+<script>
+    let folio = parseInt(localStorage.getItem('folio')) || 1;
+    let limite = parseInt(localStorage.getItem('limite')) || 20;
+    let recargasCount = parseInt(localStorage.getItem('recargasCount')) || 1;
+    let historial = JSON.parse(localStorage.getItem('historial')) || [];
+
+    window.onload = () => { 
+        document.getElementById('fecha').valueAsDate = new Date(); 
+        document.getElementById('fechaEntrega').valueAsDate = new Date();
+        loadSavedData(); renderHistory(); updateDisplay();
+        if(document.getElementById('items-container').children.length === 0) addRow(); 
+    };
+
+    function updateDisplay() { 
+        document.getElementById('folioNum').innerText = folio.toString().padStart(3, '0'); 
+        document.getElementById('folioLimit').innerText = limite; 
+    }
+
+    function addRow() { 
+        const div = document.createElement('div'); div.className = 'row-item'; 
+        div.innerHTML = `
+            <div><input type="number" class="qty" value="1" oninput="calcByQty(this)" placeholder="Cant."></div>
+            <div><input type="text" class="desc" placeholder="Descripción"></div>
+            <div><input type="number" class="price" oninput="calcByPrice(this)" placeholder="P. Unit."></div>
+            <div><input type="number" class="total-row" oninput="calcByTotal(this)" placeholder="Total"></div>
+            <div class="no-print"><button onclick="this.parentElement.parentElement.remove(); calculateAll();" style="color:red; background:none; border:none; cursor:pointer; font-size:18px;">✕</button></div>`; 
+        document.getElementById('items-container').appendChild(div); 
+    }
+
+    function addObs() {
+        const container = document.getElementById('obs-container');
+        container.innerHTML = container.innerHTML === "" ? `<textarea class="obs-input" id="observacionGeneral" placeholder="Notas..."></textarea>` : "";
+    }
+
+    function calculateAll() { 
+        let total = 0; document.querySelectorAll('.total-row').forEach(i => total += parseFloat(i.value) || 0); 
+        const ant = parseFloat(document.getElementById('anticipo').value) || 0; 
+        document.getElementById('grandTotal').innerText = total.toFixed(2); 
+        document.getElementById('restante').innerText = (total - ant).toFixed(2); 
+    }
+
+    function calcByPrice(el) { const row = el.closest('.row-item'); const q = parseFloat(row.querySelector('.qty').value) || 0; row.querySelector('.total-row').value = (q * (parseFloat(el.value) || 0)).toFixed(2); calculateAll(); }
+    function calcByQty(el) { const row = el.closest('.row-item'); const p = parseFloat(row.querySelector('.price').value) || 0; row.querySelector('.total-row').value = ((parseFloat(el.value) || 0) * p).toFixed(2); calculateAll(); }
+    function calcByTotal(el) { const row = el.closest('.row-item'); const q = parseFloat(row.querySelector('.qty').value) || 1; row.querySelector('.price').value = ((parseFloat(el.value) || 0) / q).toFixed(2); calculateAll(); }
+
+    function finalizeSale() { 
+        if(folio > limite) return alert("⚠️ Límite alcanzado.");
+        const productos = [];
+        document.querySelectorAll('.row-item').forEach(r => {
+            if(r.querySelector('.desc').value.trim()) productos.push({ q: r.querySelector('.qty').value, d: r.querySelector('.desc').value, t: r.querySelector('.total-row').value });
+        });
+        const obs = document.getElementById('observacionGeneral') ? document.getElementById('observacionGeneral').value : "";
+        historial.push({ 
+            folio: folio.toString().padStart(3, '0'), 
+            cliente: document.getElementById('cliente').value || "Gral", 
+            productos: productos, 
+            total: document.getElementById('grandTotal').innerText, 
+            fecha: document.getElementById('fecha').value, 
+            obs: obs 
+        }); 
+        localStorage.setItem('historial', JSON.stringify(historial)); 
+        localStorage.setItem('folio', ++folio); 
+        location.reload(); 
+    }
+
+    function processPrint() { 
+        const obs = document.getElementById('observacionGeneral');
+        if (obs) obs.innerHTML = obs.value;
+        const logo = document.getElementById('logoImg');
+        if(logo && logo.src) logo.style.filter = "grayscale(1) contrast(1.2)";
+        window.print(); 
+        setTimeout(() => { 
+            if(logo) logo.style.filter = "none";
+            if(confirm("¿Guardar venta y avanzar folio?")) finalizeSale(); 
+        }, 500); 
+    }
+
+    function sendWhatsApp() {
+        const tel = document.getElementById('telCliente').value;
+        if(!tel) return alert("WhatsApp requerido");
+        let pText = ""; 
+        document.querySelectorAll('.row-item').forEach(r => { 
+            if(r.querySelector('.desc').value) pText += `• ${r.querySelector('.qty').value}x ${r.querySelector('.desc').value} ($${r.querySelector('.total-row').value})\n`; 
+        });
+        const obsInput = document.getElementById('observacionGeneral');
+        let obsText = obsInput && obsInput.value.trim() !== "" ? `\n*OBSERVACIONES:*\n_${obsInput.value.trim()}_\n` : "";
+        let msg = `*${document.getElementById('empNombre').value || 'NOTA DE VENTA'}*\n*FOLIO # ${folio.toString().padStart(3,'0')}*\n--------------------------------\n${pText}--------------------------------\n*TOTAL: $${document.getElementById('grandTotal').innerText}*\n*RESTA: $${document.getElementById('restante').innerText}*\n${obsText}\n¡Gracias por su preferencia!`;
+        window.open(`https://api.whatsapp.com/send?phone=52${tel}&text=${encodeURIComponent(msg)}`);
+        setTimeout(() => { finalizeSale(); }, 800);
+    }
+
+    function generateReport() { 
+        const hoy = document.getElementById('fecha').value; 
+        const ventas = historial.filter(h => h.fecha === hoy); 
+        if(ventas.length === 0) return alert("Sin ventas.");
+        const empName = (document.getElementById('empNombre').value || 'MI NEGOCIO').toUpperCase();
+        const logoData = localStorage.getItem('empLogo') || "";
+        let suma = 0;
+        let html = `<html><head><title>Corte de Caja</title><style>@page { size: 80mm auto; margin: 0; } body { font-family: 'Courier New', monospace; margin: 0; padding: 0; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; } .ticket-container { width: 270px; background: #fff; padding: 10px; box-sizing: border-box; min-height: 100vh; } .no-p { background: #333; color: white; padding: 10px; margin-bottom: 10px; text-align: center; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; border: none; } .venta-bloque { border-bottom: 1px dashed #000; padding: 10px 0; position: relative; } .btn-mini-print { position: absolute; right: 0; top: 10px; font-size: 20px; cursor: pointer; border: none; background: none; } #ticket-individual-container { display: none; } @media print { .no-p, .btn-mini-print { display: none; } body { background: white; } }</style></head><body><div class="ticket-container"><div id="corte-general-view"><button class="no-p" onclick="window.print()">🖨️ IMPRIMIR CORTE</button><div style="text-align:center;">${logoData ? `<img src="${logoData}" style="max-height:60px;"><br>` : ''}<h2 style="margin:5px 0;">CORTE DIARIO</h2><p style="margin:0;">FECHA: ${hoy}</p><p style="margin:0; font-weight:bold;">${empName}</p><hr style="border:none; border-top:2px double #000;"></div>`;
+        ventas.forEach((v) => {
+            const ticketJSON = JSON.stringify(v).replace(/'/g, "&apos;");
+            html += `<div class="venta-bloque"><button class="btn-mini-print" onclick='imprimirSoloUno(${ticketJSON})'>🖨️</button><strong>#${v.folio} - ${v.cliente}</strong><br>${v.productos.map(p => `<div>- ${p.q}x ${p.d} ($${p.t})</div>`).join('')}<div style="text-align:right;"><strong>$${v.total}</strong></div></div>`;
+            suma += parseFloat(v.total);
+        });
+        html += `<h3 style="text-align:center; margin-top:20px;">TOTAL DÍA: $${suma.toFixed(2)}</h3></div><div id="ticket-individual-container"></div></div><script>function imprimirSoloUno(venta){const container=document.getElementById('ticket-individual-container');const generalView=document.getElementById('corte-general-view');container.innerHTML='<div style="text-align:center;">'+(venta.logo?'<img src="'+venta.logo+'" style="max-height:70px;"><br>':'')+'<h3 style="margin:0;">'+venta.emp+'</h3><p>FOLIO: '+venta.folio+'<br>FECHA: '+venta.fecha+'</p><hr style="border-top:1px dashed #000;"><div style="text-align:left;">'+venta.productos.map(p=>'<div>'+p.q+'x '+p.d+' <span style="float:right;">$'+p.t+'</span></div>').join('')+'</div><hr style="border-top:1px dashed #000;"><h4 style="text-align:right;">TOTAL: $'+venta.total+'</h4>'+(venta.obs?'<p style="font-style:italic; font-size:10px;">Obs: '+venta.obs+'</p>':'')+'<p>¡Gracias!</p></div>';generalView.style.display='none';container.style.display='block';setTimeout(function(){window.print();setTimeout(function(){container.style.display='none';generalView.style.display='block';},500);},300);}<\/script></body></html>`;
+        const win = window.open('','_blank'); win.document.write(html); win.document.close();
+    }
+
+    function toggleHistory() {
+        const list = document.getElementById('historyList'); const arrow = document.getElementById('histArrow');
+        if (list.style.display === 'block') { list.style.display = 'none'; arrow.innerText = '▼'; } 
+        else { list.style.display = 'block'; arrow.innerText = '▲'; }
+    }
+
+    function renderHistory() { 
+        const c = document.getElementById('historyList'); c.innerHTML = ""; 
+        historial.slice().reverse().slice(0, 50).forEach((h, i) => {
+            c.innerHTML += `<div class="history-item" onclick="toggleDetail(${i})"><strong>#${h.folio} - ${h.cliente}</strong> ($${h.total})<div id="det-${i}" class="history-detail">${h.productos.map(p=>`• ${p.q}x ${p.d}`).join('<br>')}${h.obs ? `<br><i>Obs: ${h.obs}</i>` : ''}</div></div>`;
+        });
+    }
+
+    function cierreMensual() {
+        if (historial.length === 0) return alert("No hay ventas para exportar.");
+        if (confirm("Se descargará el reporte y se limpiará el historial. ¿Deseas continuar?")) {
+            let csvContent = "\uFEFF"; 
+            csvContent += "Folio,Fecha,Cliente,Productos,Total,Observaciones\n";
+            historial.forEach(h => {
+                let listaProductos = h.productos.map(p => `${p.q}x ${p.d}`).join(" | ");
+                let cliente = h.cliente.replace(/,/g, "");
+                let obs = h.obs ? h.obs.replace(/,/g, "").replace(/\n/g, " ") : "";
+                csvContent += `${h.folio},${h.fecha},${cliente},"${listaProductos}",${h.total},${obs}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `CIERRE_VENTAS_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            historial = [];
+            localStorage.setItem('historial', JSON.stringify(historial));
+            renderHistory();
+            alert("¡Reporte generado con éxito! El historial se ha reiniciado.");
+        }
+    }
+
+    function toggleDetail(id) { const e = document.getElementById(`det-${id}`); e.style.display = e.style.display === 'block' ? 'none' : 'block'; }
+    function saveData() { ['empNombre', 'empDueno', 'empRFC', 'empDir', 'empCP', 'empCorreo'].forEach(id => localStorage.setItem(id, document.getElementById(id).value)); }
+    function loadSavedData() { ['empNombre', 'empDueno', 'empRFC', 'empDir', 'empCP', 'empCorreo'].forEach(id => document.getElementById(id).value = localStorage.getItem(id) || ""); if(localStorage.getItem('empLogo')) { document.getElementById('logoImg').src = localStorage.getItem('empLogo'); document.getElementById('logoImg').style.display='block'; document.getElementById('logoLabel').style.display='none'; } }
+    function saveLogo(input) { if(input.files[0]) { const r = new FileReader(); r.onload = e => { localStorage.setItem('empLogo', e.target.result); location.reload(); }; r.readAsDataURL(input.files[0]); } }
+    function openRechargeModal() { document.getElementById('idDisplay').innerText = (localStorage.getItem('empNombre') || 'SISTEMA').toUpperCase().replace(/\s/g,''); document.getElementById('rechargeOverlay').style.display = 'block'; }
+    function closeModals() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); }
+    
+    function executeRecharge() {
+        const id = document.getElementById('idDisplay').innerText, p = document.getElementById('paqueteSeleccionado').value, k = document.getElementById('rechargeKey').value.trim();
+        if(k === btoa(`${id}-${recargasCount}-${p}-jazz360`).replace(/=/g,'').toUpperCase().substring(0,10)) {
+            limite += parseInt(p); recargasCount++; localStorage.setItem('limite', limite); localStorage.setItem('recargasCount', recargasCount); location.reload();
+        } else alert("Error");
+    }
+
+    function resetSystem() {
+        const pass1 = prompt("🔒 PASO 1: Ingresa clave de acceso para resetear:");
+        if (pass1 === "creadorjazz") {
+            const pass2 = prompt("⚠️ ADVERTENCIA: Se borrarán folios, historial y configuración. Para BORRAR TODO escribe la clave final:");
+            if (pass2 === "reset123") {
+                localStorage.clear();
+                alert("✅ Sistema borrado completamente.");
+                location.reload();
+            } else {
+                alert("Clave final incorrecta. Operación cancelada.");
+            }
+        } else {
+            alert("Clave de acceso denegada.");
+        }
+    }
+</script>
+</body>
+</html>
